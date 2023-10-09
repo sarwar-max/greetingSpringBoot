@@ -1,39 +1,43 @@
 pipeline {
     agent any
-    tools{
-        maven 'Maven3'
+    environment {
+        DOCKERHUB_USERNAME = credentials('dockerhub-username') ?: 'sarwar1512'
+        DOCKERHUB_PASSWORD = credentials('dockerhub-password') ?: 'sarwar@1#'
+        DOCKER_IMAGE_NAME = "sarwar1512/simplespringboot:0.0.1-SNAPSHOT"
     }
-    stages{
-        stage('Build Maven'){
-            steps{
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]])
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the GitHub repository
+                checkout([$class: 'GitSCM', branches: [[name: 'master']], userRemoteConfigs: [[url: 'https://github.com/sarwar-max/greetingSpringBoot.git']]])
+            }
+        }
+        stage('Build and Test') {
+            steps {
+                // Build the Spring Boot application using Maven
                 sh 'mvn clean install'
             }
         }
-        stage('Build docker image'){
-            steps{
-                script{
-                    sh 'docker build -t javatechie/devops-integration .'
-                }
+        stage('Build Docker Image') {
+            steps {
+                // Build the Docker image using the Dockerfile
+                sh "docker build -t ${DOCKER_IMAGE_NAME} ."
             }
         }
-        stage('Push image to Hub'){
-            steps{
-                script{
-                   withCredentials([string(credentialsId: 'dockerhub-pwd', variable: 'dockerhubpwd')]) {
-                   sh 'docker login -u javatechie -p ${dockerhubpwd}'
-
-}
-                   sh 'docker push javatechie/devops-integration'
-                }
+        stage('Push to Docker Hub') {
+            steps {
+                // Log in to Docker Hub
+                sh "docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}"
+                
+                // Push the Docker image to Docker Hub
+                sh "docker push ${DOCKER_IMAGE_NAME}"
             }
         }
-        stage('Deploy to k8s'){
-            steps{
-                script{
-                    kubernetesDeploy (configs: 'deploymentservice.yaml',kubeconfigId: 'k8sconfigpwd')
-                }
-            }
+    }
+    post {
+        always {
+            // Clean up any Docker images and containers
+            sh "docker rmi ${DOCKER_IMAGE_NAME}"
         }
     }
 }
