@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        DOCKERHUB_USERNAME = credentials('dockerhub-username') ?: 'sarwar1512'
-        DOCKERHUB_PASSWORD = credentials('dockerhub-password') ?: 'sarwar@1#'
+        DOCKERHUB_USERNAME = credentials('dockerhub-username') : 'sarwar1512'
+        DOCKERHUB_PASSWORD = credentials('dockerhub-password') : 'sarwar@1#'
         DOCKER_IMAGE_NAME = "sarwar1512/simplespringboot:0.0.1-SNAPSHOT"
     }
     stages {
