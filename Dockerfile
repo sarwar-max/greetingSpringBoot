@@ -1,4 +1,4 @@
-FROM openjdk:17
+FROM openjdk:17-alpine
 EXPOSE 9090
-ADD target/SimpleSpringBoot-0.0.1-SNAPSHOT.jar SimpleSpringBoot-0.0.1-SNAPSHOT.jar
-ENTRYPOINT ["java","-jar","/SimpleSpringBoot-0.0.1-SNAPSHOT.jar"]
+ADD target/spring-boot-docker.jar spring-boot-docker.jar
+ENTRYPOINT ["java","-jar","/spring-boot-docker.jar"]

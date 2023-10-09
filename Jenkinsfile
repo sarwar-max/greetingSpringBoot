@@ -1,43 +1,48 @@
 pipeline {
     agent any
+    
     environment {
-        DOCKERHUB_USERNAME = credentials('dockerhub-username') : 'sarwar1512'
-        DOCKERHUB_PASSWORD = credentials('dockerhub-password') : 'sarwar@1#'
-        DOCKER_IMAGE_NAME = "sarwar1512/simplespringboot:0.0.1-SNAPSHOT"
+        // Define environment variables if needed
+        DOCKER_IMAGE_NAME = "spring-boot-docker"
+        SPRING_PROFILE = "default"
     }
+    
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the code from the GitHub repository
-                checkout([$class: 'GitSCM', branches: [[name: 'master']], userRemoteConfigs: [[url: 'https://github.com/sarwar-max/greetingSpringBoot.git']]])
+                // Checkout your source code from your Git repository
+                git branch: 'main', url: 'https://github.com/yourusername/yourrepository.git'
             }
         }
-        stage('Build and Test') {
+        
+        stage('Build Spring Boot Application') {
             steps {
-                // Build the Spring Boot application using Maven
-                sh 'mvn clean install'
+                bat 'mvn clean package' // Use "bat" for Windows batch commands
             }
         }
+        
         stage('Build Docker Image') {
             steps {
-                // Build the Docker image using the Dockerfile
-                sh "docker build -t ${DOCKER_IMAGE_NAME} ."
+                bat 'docker build -t ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} .' // Use "bat" for Windows batch commands
             }
         }
-        stage('Push to Docker Hub') {
+        
+        stage('Push Docker Image') {
             steps {
-                // Log in to Docker Hub
-                sh "docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}"
-                
-                // Push the Docker image to Docker Hub
-                sh "docker push ${DOCKER_IMAGE_NAME}"
+                bat 'docker push ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}' // Use "bat" for Windows batch commands
+            }
+        }
+        
+        stage('Deploy to Docker') {
+            steps {
+                bat "docker run -d --name ${DOCKER_IMAGE_NAME} -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILE} -p 8080:8080 ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}" // Use "bat" for Windows batch commands
             }
         }
     }
+    
     post {
-        always {
-            // Clean up any Docker images and containers
-            sh "docker rmi ${DOCKER_IMAGE_NAME}"
+        success {
+            // Add post-build actions here (e.g., notifications)
         }
     }
 }
