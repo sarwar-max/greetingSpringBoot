@@ -1,44 +1,44 @@
 pipeline {
     agent any
-    
-    environment {
-        // Define environment variables if needed
-        DOCKER_IMAGE_NAME = "spring-boot-docker"
-        SPRING_PROFILE = "default"
+
+    tools {
+        maven 'Maven3'
     }
-    
+
     stages {
-        stage('Checkout') {
+        stage('Checkout and Build') {
             steps {
-                // Checkout your source code from your Git repository
-                git branch: 'main', url: 'https://github.com/sarwar-max/greetingSpringBoot.git'
+                script {
+                    // Checkout the 'master' branch from your Git repository
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: '*/master']],
+                        userRemoteConfigs: [[url: 'https://github.com/sarwar-max/greetingSpringBoot']]])
+
+                    // Build your Maven project
+                    bat 'mvn clean install'
+                }
             }
         }
-        
-        stage('Build Spring Boot Application') {
-            steps {
-                bat 'mvn clean package' // Use "bat" for Windows batch commands
-            }
-        }
-        
+
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} .' // Use "bat" for Windows batch commands
+                script {
+                    // Build a Docker image from your Spring Boot application
+                    bat "docker build -t sarwar1512/spring-boot-docker ."
+                }
             }
         }
-        
-        stage('Push Docker Image') {
+
+        stage('Push Docker Image to Docker Hub') {
             steps {
-                bat 'docker push ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}' // Use "bat" for Windows batch commands
-            }
-        }
-        
-        stage('Deploy to Docker') {
-            steps {
-                bat "docker run -d --name ${DOCKER_IMAGE_NAME} -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILE} -p 8080:8080 ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}" // Use "bat" for Windows batch commands
+                script {
+                    // Log in to Docker Hub
+                    bat 'docker login -u sarwar1512 -p sarwar@1#'
+
+                    // Push the Docker image to Docker Hub
+                    bat "docker push sarwar1512/spring-boot-docker"
+                }
             }
         }
     }
-    
-    
 }
